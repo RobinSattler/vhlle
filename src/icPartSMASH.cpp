@@ -14,8 +14,7 @@
 
 using namespace std;
 
-IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
-                         double _tau0) {
+IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz) {
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -29,7 +28,6 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  zmin = f->getZ(0);
  zmax = f->getZ(nz - 1);
 
- tau0 = _tau0;
  Rgx = _Rgt;
  Rgy = _Rgt;
  Rgz = _Rgz;
@@ -90,24 +88,26 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
               Py_val >> Rap_val >> Id_val >> Charge_val;
 
   // Fill arrays
-  Tau.push_back(Tau_val);
-  X.push_back(X_val);
-  Y.push_back(Y_val);
-  Eta.push_back(Eta_val);
-  Mt.push_back(Mt_val);
-  Px.push_back(Px_val);
-  Py.push_back(Py_val);
-  Rap.push_back(Rap_val);
-  Id.push_back(Id_val);
-  Charge.push_back(Charge_val);
+  if (!instream.fail()) {
+   tau0 = Tau_val;
+   Tau.push_back(Tau_val);
+   X.push_back(X_val);
+   Y.push_back(Y_val);
+   Eta.push_back(Eta_val);
+   Mt.push_back(Mt_val);
+   Px.push_back(Px_val);
+   Py.push_back(Py_val);
+   Rap.push_back(Rap_val);
+   Id.push_back(Id_val);
+   Charge.push_back(Charge_val);
 
 #ifdef TSHIFT
   Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
                          (Tau[np] * cosh(Eta[np]) + tshift));
   Tau[np] += tshift;
 #endif
-  if (!instream.fail())
    np++;
+  }
   else if (np > 0) {
    // cout<<"readF14:instream: failure reading data\n" ;
    // cout<<"stream = "<<instream.str()<<endl ;
