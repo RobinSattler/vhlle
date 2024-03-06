@@ -32,6 +32,7 @@
 #include "icGlissando.h"
 #include "icTrento.h"
 #include "icTest.h"
+#include "icTrento3d.h"
 #include "eos.h"
 #include "eo3.h"
 #include "eo1.h"
@@ -40,11 +41,15 @@
 #include "eoHadron.h"
 #include "eoSmash.h"
 #include "trancoeff.h"
+#include "vtk.h"
+
 
 using namespace std;
 
 // program parameters, to be read from file
-int nx, ny, nz, eosType, etaSparam = 0, zetaSparam = 0;
+int nx, ny, nz, eosType, etaSparam = 0, zetaSparam = 0,vtk = 0;
+bool vtk_cartesian=false;
+std::string vtk_values;
 int eosTypeHadron = 0;
 // in Cartesian frame etamin, etamax = zmin, zmax
 double xmin, xmax, ymin, ymax, etamin, etamax, tau0, tauMax, tauResize, dtau;
@@ -53,6 +58,7 @@ double etaS, zetaS, eCrit, eEtaSMin, al, ah, aRho, T0, etaSMin;
 int icModel,glauberVariable =1;  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 double epsilon0, Rgt, Rgz, impactPar, s0ScaleFactor;
 bool freezeoutOnly {false};  // freezoutOnly 1 for true, 0 for false
+int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel 
 
 void setDefaultParameters() {
  tauResize = 4.0;
@@ -123,6 +129,12 @@ void readParameters(char *parFile) {
    impactPar = atof(parValue);
   else if (strcmp(parName, "s0ScaleFactor") == 0)
    s0ScaleFactor = atof(parValue);
+  else if (strcmp(parName, "VTK_output") == 0)
+   vtk = atoi(parValue);
+  else if (strcmp(parName, "VTK_output_values") == 0)
+   vtk_values = parValue;
+  else if (strcmp(parName, "VTK_cartesian") == 0)
+   vtk_cartesian = parValue;
   else if (strcmp(parName, "etaSparam") == 0)
    etaSparam = atoi(parValue);
   else if (strcmp(parName, "aRho") == 0)
@@ -139,6 +151,8 @@ void readParameters(char *parFile) {
    etaSMin = atof(parValue);
   else if (strcmp(parName, "freezeoutOnly") == 0)
    freezeoutOnly = atoi(parValue);
+  else if (strcmp(parName, "smoothingType") == 0)
+   smoothingType = atoi(parValue);
   else if (parName[0] == '!')
    cout << "CCC " << sline.str() << endl;
   else
@@ -190,8 +204,12 @@ void printParameters() {
  cout << "zeta/s = " << zetaS << endl;
  cout << "epsilon0 = " << epsilon0 << endl;
  cout << "Rgt = " << Rgt << "  Rgz = " << Rgz << endl;
+ cout << "smoothingType = " << smoothingType << endl;
  cout << "impactPar = " << impactPar << endl;
  cout << "s0ScaleFactor = " << s0ScaleFactor << endl;
+ cout << "VTK output = " << vtk << endl;
+ cout << "VTK output values = " << vtk_values << endl;
+ cout << "VTK cartesian = " << vtk_cartesian << endl;
  cout << "======= end parameters =======\n";
 }
 
@@ -318,11 +336,15 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if (icModel == 6){ // SMASH IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0);
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, smoothingType);
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==7){ // IC from Trento
    IcTrento *ic = new IcTrento(f, isInputFile.c_str(), tau0, collSystem.c_str());
+   ic->setIC(f, eos);
+   delete ic;  
+} else if(icModel==8){ // IC from Trento
+   IcTrento3d *ic = new IcTrento3d(f, isInputFile.c_str(), tau0, collSystem.c_str());
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==8){ // IC for testing purposes
@@ -353,9 +375,17 @@ int main(int argc, char **argv) {
 
  bool resized = false; // flag if the grid has been resized
  double ctime; // current time, tau or t depending on the coordinate frame
+ 
+ std::string dir=outputDir.c_str();
+ VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin, vtk_cartesian);
+
+ int nelements = 0;
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
+  if(vtk>0) {
+    vtk_out.write(*h,vtk_values);
+  }
   int nSubSteps = 1;
   #ifdef CARTESIAN
   ctime = h->time();
@@ -379,7 +409,7 @@ int main(int argc, char **argv) {
   #else
   ctime = h->getTau();
   #endif
-  f->outputSurface(ctime);
+  nelements = f->outputSurface(ctime);
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
   if(ctime>=tauResize and resized==false) {
@@ -387,7 +417,7 @@ int main(int argc, char **argv) {
    f = expandGrid2x(h, eos, eosH, trcoeff);
    resized = true;
   }
- } while(ctime<tauMax+0.0001);
+ } while((ctime<tauMax+0.0001) and (nelements>0));
 
  end = 0;
  time(&end);
