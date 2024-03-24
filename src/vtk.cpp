@@ -91,8 +91,13 @@ void VtkOutput::write_vtk_scalar(std::ofstream &file, const Hydro h, std::string
          }else{
            cell2=cell;
          }
+         #ifdef CARTESIAN
+         cell->getPrimVar(eos_, 1.0, e, p, nb, nq, ns, vx, vy, vz);
+         cell2->getPrimVar(eos_, 1.0, e2, p2, nb2, nq2, ns2, vx2, vy2, vz2);
+         #else
          cell->getPrimVar(eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
          cell2->getPrimVar(eos_, h.getTau(), e2, p2, nb2, nq2, ns2, vx2, vy2, vz2);
+         #endif
          double q=0;
          if (quantity=="eps"){
            q=factor*e+(factor-1)*e2;
