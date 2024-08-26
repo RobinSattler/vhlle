@@ -28,6 +28,8 @@ public:
        double _minz, double _maxz, double dt, double eCrit);
  ~Fluid();
  void initOutput(const char *dir, double tau0, bool hsOnly);
+ void renameOutput(const char *dir);
+ void checkOutputDirectory(std::string freezeoutFile);
  int output_xy_spacing;
  int output_eta_points;
  int output_tau_spacing;
@@ -64,7 +66,7 @@ public:
  void updateM(double tau, double dt);
 
  void outputGnuplot(double tau);
- int outputSurface(double tau);
- void outputCorona(double tau);
+ int outputSurface(double tau, bool extendFO);
+ void outputCorona(double tau, bool extendFO);
  void InitialAnisotropies(double tau0);
 };

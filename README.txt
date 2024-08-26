@@ -81,6 +81,8 @@ The following branches may be particularly useful:
  
  The latest version of the ROOT package is also available at http://root.cern.ch/
  From commit f1dbe5a onwards, ROOT6 is required to compile the code.
+ As of commit 589b7cb , C++17 is required (because of calls to std::filesystem),
+ therefore make sure `root-config --cflags` retruns '-std=c++17' among the options.
  
  Optionally, to run Gluplot scripts provided in the program package one has to
  install Gnuplot and awk (gawk).
@@ -89,6 +91,8 @@ The following branches may be particularly useful:
  git clone https://github.com/yukarpenko/vhlle.git
  cd vhlle
  git checkout stable_ebe
+ mkdir obj
+ make
 
  3) clone another repository, which contains the equation of state,
     sample initial state tables and related sample parameter files:
@@ -115,7 +119,8 @@ The following branches may be particularly useful:
 <IS-file> is the file name of an initial state table. This file has to be supplied
  for all but the simplest initial state options (optical Glauber or Gubser).
 <output-directory> is the directory to write the output files into. If the directory
- does not exist, it will be created.
+ does not exist, it will be created. If not specified a 'data' subfolder in the current directory 
+ will be created or used if already existing.
 
  A sample command:
  ./hlle_visc -params params/glissRHIC/gliss2RHIC.20-30 -system RHIC200 -ISinput ic/glissando/sources.RHIC.20-30.dat -outputDir output/RHIC.20-30
