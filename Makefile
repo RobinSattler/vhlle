@@ -17,11 +17,7 @@ SRC        = cll.cpp eos.cpp eo3.cpp eo1.cpp eoChiral.cpp eoCMF.cpp eoCMFe.cpp e
              icGlauber.cpp icGubser.cpp icGlissando.cpp icSuperMC.cpp icTrento.cpp icTrento3d.cpp icTest.cpp vtk.cpp
 OBJS       = $(patsubst %.cpp,$(objdir)/%.o,$(SRC))
 
-#ifdef CARTESIAN
 TARGET	   = hlle_visc.cart
-#else
-TARGET     = hlle_visc
-#endif
 #------------------------------------------------------------------------------
 $(TARGET):       $(OBJS)
 		$(LD)  $(LDFLAGS) $^ -o $@ $(LIBS)
