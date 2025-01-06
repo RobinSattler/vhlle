@@ -1,3 +1,4 @@
+#include "cll.h"
 
 class Cell;
 class Fluid;
@@ -17,13 +18,16 @@ private:
  #endif
  double tau_z;    // effective value of the proper time used in 1/tau factors in
                   // the fluxes. Used to increase the accuracy
+ bool vorticityOn = false;
+
 public:
  Hydro(Fluid *_f, EoS *_eos, TransportCoeff *_trcoeff, double _t0, double _dt);
  ~Hydro();
+ void enableVorticity(); // enable vorticity
  void setDtau(double deltaTau);  // change the timestep
  double getDtau() { return dt; }  // return current value of timestep
  void setFluid(Fluid *_f) { f = _f; }
- Fluid* getFluid() { return f; }
+ Fluid* getFluid()  const { return f; }
 
  // HLLE (ideal)flux between two neighbouring cells in a given direction
  // mode: PREDICT = used in predictor step; calculates fluxes for dt/2
@@ -42,8 +46,8 @@ public:
  // plus \partial_\mu u^\nu matrix (dmu) and
  // expansion scalar \partial_mu u^\mu (du)
  // for a given cell (ix,iy,iz)
- void NSquant(int ix, int iy, int iz, double pi[][4], double &Pi,
-              double dmu[4][4], double &du);
+ void NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
+              double dmu[4][4], std::unique_ptr<Matrix2D> &dbeta, double &du);
  // sets the values of shear stress/bulk pressure in NS limit in all hydro grid
  void setNSvalues();
  // advances numerical solution for shear/bulk in a whole grid over one
@@ -53,7 +57,7 @@ public:
  // source terms) over one timestep
  void performStep(void);
  // gets the current proper time
- inline double getTau() { return tau; }
+ inline double getTau() const { return tau; }
  #ifdef CARTESIAN
  double time() { return t; }
  #endif
