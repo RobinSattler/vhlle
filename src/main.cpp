@@ -4,14 +4,14 @@
 *            by Iurii Karpenko                                                *
 *  contact:  yu.karpenko@gmail.com                                            *
 *  For the detailed description please refer to:                              *
-*  Comput. Phys. Commun. 185 (2014), 3016   arXiv:1312.4160                   *
+*  Comput. Phys. Commun. 185 (2014), 3016    [arXiv:1312.4160]                *
 *                                                                             *
 *  This code can be freely used and redistributed, provided that this         *
-*  copyright appear in all the copies. If you decide to make modifications    *
+*  copyright appears in all the copies. If you decide to make modifications   *
 *  to the code, please contact the authors, especially if you plan to publish *
-* the results obtained with such modified code. Any publication of results    *
-* obtained using this code must include the reference to                      *
-* arXiv:1312.4160 [nucl-th] or the published version of it.                   *
+*  the results obtained with such modified code. Any publication of results   *
+*  obtained using this code must include the reference to:                    *
+*  Comput. Phys. Commun. 185 (2014), 3016    [arXiv:1312.4160]                *
 *                                                                             *
 *******************************************************************************/
 
@@ -363,7 +363,7 @@ int main(int argc, char **argv) {
    ICSuperMC *ic = new ICSuperMC(isInputFile, tau0, collSystem);
    ic->setIC(f, eos);
    delete ic;
- } else if(icModel == 10){ // IC for testing purposes
+ } else if(icModel == 10) { // IC for testing purposes
    ICTest *ic = new ICTest();
    ic->setIC(f, eos, 1);
    delete ic;

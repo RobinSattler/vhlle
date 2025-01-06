@@ -1,9 +1,6 @@
 #include <fstream>
 #include <iomanip>
-#include <iomanip>
-#include <TF1.h>
-#include <TF2.h>
-#include <TGraph.h>
+#include <iostream>
 
 #include "fld.h"
 #include "eos.h"
