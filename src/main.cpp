@@ -40,6 +40,7 @@
 #include "eoHadron.h"
 #include "eoSmash.h"
 #include "trancoeff.h"
+#include "vtk.h"
 
 using namespace std;
 
@@ -48,7 +49,7 @@ int nx, ny, nz, eosType, etaSparam = 0, zetaSparam = 0;
 int eosTypeHadron = 0;
 // in Cartesian frame etamin, etamax = zmin, zmax
 double xmin, xmax, ymin, ymax, etamin, etamax, tau0, tauMax, tauResize, dtau;
-string collSystem, outputDir, isInputFile;
+string collSystem, outputDir, isInputFile, vtk_values{""};
 double etaS, zetaS, eCrit, eEtaSMin, al, ah, aRho, T0, etaSMin;
 int icModel,glauberVariable =1;  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 double epsilon0, Rgt, Rgz, impactPar, s0ScaleFactor;
@@ -123,6 +124,8 @@ void readParameters(char *parFile) {
    impactPar = atof(parValue);
   else if (strcmp(parName, "s0ScaleFactor") == 0)
    s0ScaleFactor = atof(parValue);
+  else if (strcmp(parName, "VTK_output_values") == 0)
+   vtk_values = parValue;
   else if (strcmp(parName, "etaSparam") == 0)
    etaSparam = atoi(parValue);
   else if (strcmp(parName, "aRho") == 0)
@@ -192,6 +195,7 @@ void printParameters() {
  cout << "Rgt = " << Rgt << "  Rgz = " << Rgz << endl;
  cout << "impactPar = " << impactPar << endl;
  cout << "s0ScaleFactor = " << s0ScaleFactor << endl;
+ cout << "VTK_output_values = " << vtk_values << endl;
  cout << "======= end parameters =======\n";
 }
 
@@ -353,9 +357,14 @@ int main(int argc, char **argv) {
 
  bool resized = false; // flag if the grid has been resized
  double ctime; // current time, tau or t depending on the coordinate frame
+ std::string dir=outputDir.c_str();
+ VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin);
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
+  if (!vtk_values.empty()) {
+    vtk_out.write(*h,vtk_values);
+  }
   int nSubSteps = 1;
   #ifdef CARTESIAN
   ctime = h->time();
