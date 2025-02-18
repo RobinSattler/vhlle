@@ -234,12 +234,13 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
           (code > 0) ? Baryon_val = 1 : Baryon_val = -1;
         }
   }
-  Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val, 
-      Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
-  //particles->push(particleIn);
-  all_particles.push_back(particleIn);
-  np++;
-  //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
+  if(abs(Id_val)>100) { // exclude photons, W and Z bosons and Higgs
+    Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val,
+        Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
+    all_particles.push_back(particleIn);
+    np++;
+    //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
+  }
   }
   else if (np > 0) {
    // cout<<"readF14:instream: failure reading data\n" ;
