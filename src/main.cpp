@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
  h = new Hydro(f, eos, trcoeff, *timeInit, dtau);
  ctime = h->time();
  cout << "Hydro starting at " << ctime << endl;
- double ftime = ctime + 2.0;
+ double ftime = ctime + 1.0;  // start hypersurface calculation 1 fm/c after the start
  #else
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
  #endif
