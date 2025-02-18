@@ -487,11 +487,12 @@ void transformToLab(double eta, double &vx, double &vy, double &vz) {
 
 // return value: the number of surface elements reconstructed at the current timestep
 int Fluid::outputSurface(double tau) {
- static double nbSurf = 0.0;
+ static double EtotSurfPos = 0.0, EtotSurfNeg = 0.0;
+ static double nbTotSurf = 0.0, nbTotSurfPos = 0.0, nbTotSurfNeg = 0.0;
  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, Q[7];
- double E = 0., Efull = 0., S = 0., Px = 0., vt_num = 0., vt_den = 0.,
+ double E = 0., Ecore = 0., Efull = 0., S = 0., Px = 0., vt_num = 0., vt_den = 0.,
         vxvy_num = 0., vxvy_den = 0., pi0x_num = 0., pi0x_den = 0.,
-        txxyy_num = 0., txxyy_den = 0., Nb1 = 0., Nb2 = 0.,
+        txxyy_num = 0., txxyy_den = 0., Nb1 = 0., Nb2 = 0., Nbcore = 0.,
         eps_p = 0. ;
  double eta = 0;
  int nelements = 0, nsusp = 0;  // all surface elements and suspicious ones
@@ -524,6 +525,10 @@ int Fluid::outputSurface(double tau) {
     eta = getZ(iz);
     #ifdef CARTESIAN
     E += (e + p) / (1. - vx*vx - vy*vy - vz*vz) - p;
+    if(e>ecrit) {
+      Ecore += (e + p) / (1. - vx*vx - vy*vy - vz*vz) - p;
+      Nbcore += Q[NB_];
+    }
     Nb1 += Q[NB_];
     Nb2 += nb / sqrt(1. - vx*vx - vy*vy - vz*vz);
     //---- inf check
@@ -638,11 +643,6 @@ int Fluid::outputSurface(double tau) {
     const int Nsegm = cornelius->get_Nelements();
     for (int isegm = 0; isegm < Nsegm; isegm++) {
      nelements++;
-     output::ffreeze.precision(15);
-     output::ffreeze << setw(24) << tau + cornelius->get_centroid_elem(isegm, 0)
-             << setw(24) << getX(ix) + cornelius->get_centroid_elem(isegm, 1)
-             << setw(24) << getY(iy) + cornelius->get_centroid_elem(isegm, 2)
-             << setw(24) << getZ(iz) + cornelius->get_centroid_elem(isegm, 3);
      // ---- interpolation procedure
      double vxC = 0., vyC = 0., vzC = 0., TC = 0., mubC = 0., muqC = 0.,
             musC = 0., piC[10], PiC = 0., nbC = 0.,
@@ -715,68 +715,95 @@ int Fluid::outputSurface(double tau) {
      for(int ii=0; ii<4; ii++)
       dsigma[ii] = cornelius->get_normal_elem(0, ii);
      #endif
-     double dVEff = 0.0;
-     for (int ii = 0; ii < 4; ii++)
+     // d(Veff) and dsigma_mu dsigma^mu computation
+     double dVEff = 0.0, dsigma2 = 0.0;
+     for (int ii = 0; ii < 4; ii++) {
       dVEff += dsigma[ii] * uC[ii];  // normalize for Delta eta=1
+      dsigma2 += gmumu[ii] * dsigma[ii] *  dsigma[ii];
+     }
      vEff += dVEff;
-     for (int ii = 0; ii < 4; ii++) output::ffreeze << setw(24) << dsigma[ii];
-     for (int ii = 0; ii < 4; ii++) output::ffreeze << setw(24) << uC[ii];
-     output::ffreeze << setw(24) << TC << setw(24) << mubC << setw(24) << muqC
-             << setw(24) << musC;
-#ifdef OUTPI
-     double picart[10];
-     #ifndef CARTESIAN
-     /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
-                                      2. * ch * sh * piC[index44(0, 3)] +
-                                      sh * sh * piC[index44(3, 3)];
-     /*pi01*/ picart[index44(0, 1)] =
-         ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
-     /*pi02*/ picart[index44(0, 2)] =
-         ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
-     /*pi03*/ picart[index44(0, 3)] =
-         ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
-         (ch * ch + sh * sh) * piC[index44(0, 3)];
-     /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
-     /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
-     /*pi13*/ picart[index44(1, 3)] =
-         sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
-     /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
-     /*pi23*/ picart[index44(2, 3)] =
-         sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
-     /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
-                                      ch * ch * piC[index44(3, 3)] +
-                                      2. * sh * ch * piC[index44(0, 3)];
-     #else
-     for(int ii=0; ii<4; ii++)
-      for(int jj=0; jj<ii; jj++)
-       picart[index44(ii, jj)] = piC[index44(ii, jj)];
-     #endif
-     for (int ii = 0; ii < 10; ii++) output::ffreeze << setw(24) << picart[ii];
-     output::ffreeze << setw(24) << PiC << endl;
-#else
-     output::ffreeze << setw(24) << dVEff << endl;
-#endif
-     double dEsurfVisc = 0.;
-     for (int i = 0; i < 4; i++)
-      dEsurfVisc += picart[index44(0, i)] * dsigma[i];
-     EtotSurf += (eC + pC) * uC[0] * dVEff - pC * dsigma[0] + dEsurfVisc;
-     nbSurf += nbC * dVEff;
+     const double dEtotSurf = (eC + pC) * uC[0] * dVEff - pC * dsigma[0];
+     EtotSurf += dEtotSurf;
+     nbTotSurf += nbC * dVEff;
+     // check if the surface element correspond to matter flowing out -> particlization
+     if((dsigma2>0. and dsigma[0]>0.) or (dsigma2<0. and dEtotSurf>0.)) {
+      EtotSurfPos += dEtotSurf;
+      nbTotSurfPos += nbC * dVEff;
+      output::ffreeze.precision(15);
+      output::ffreeze << setw(24) << tau + cornelius->get_centroid_elem(isegm, 0)
+              << setw(24) << getX(ix) + cornelius->get_centroid_elem(isegm, 1)
+              << setw(24) << getY(iy) + cornelius->get_centroid_elem(isegm, 2)
+              << setw(24) << getZ(iz) + cornelius->get_centroid_elem(isegm, 3);
+      for (int ii = 0; ii < 4; ii++) output::ffreeze << setw(24) << dsigma[ii];
+      for (int ii = 0; ii < 4; ii++) output::ffreeze << setw(24) << uC[ii];
+      output::ffreeze << setw(24) << TC << setw(24) << mubC << setw(24) << muqC
+              << setw(24) << musC;
+      #ifdef OUTPI
+      double picart[10];
+      #ifndef CARTESIAN
+      /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
+                                        2. * ch * sh * piC[index44(0, 3)] +
+                                        sh * sh * piC[index44(3, 3)];
+      /*pi01*/ picart[index44(0, 1)] =
+          ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
+      /*pi02*/ picart[index44(0, 2)] =
+          ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
+      /*pi03*/ picart[index44(0, 3)] =
+          ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
+          (ch * ch + sh * sh) * piC[index44(0, 3)];
+      /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
+      /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
+      /*pi13*/ picart[index44(1, 3)] =
+          sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
+      /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
+      /*pi23*/ picart[index44(2, 3)] =
+          sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
+      /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
+                                        ch * ch * piC[index44(3, 3)] +
+                                        2. * sh * ch * piC[index44(0, 3)];
+      #else
+      for(int ii=0; ii<4; ii++)
+        for(int jj=0; jj<ii; jj++)
+        picart[index44(ii, jj)] = piC[index44(ii, jj)];
+      #endif
+      for (int ii = 0; ii < 10; ii++) output::ffreeze << setw(24) << picart[ii];
+      output::ffreeze << setw(24) << PiC << endl;
+      #else
+      output::ffreeze << setw(24) << dVEff << endl;
+      #endif
+      //double dEsurfVisc = 0.;
+      //for (int i = 0; i < 4; i++)
+      //  dEsurfVisc += picart[index44(0, i)] * dsigma[i];
+      //EtotSurf += dEsurfVisc;
+     } else { // a case of matter flowing in, no use for particlization
+      EtotSurfNeg += dEtotSurf;
+      nbTotSurfNeg += nbC * dVEff;
     }
     // if(cornelius->get_Nelements()>1) cout << "oops, Nelements>1\n" ;
     //----- end Cornelius
    }
+  }
  E = E * dx * dy * dz;
+ Ecore = Ecore * dx * dy * dz;
  Efull = Efull * dx * dy * dz;
  S = S * dx * dy * dz;
  Nb1 *= dx * dy * dz;
  Nb2 *= dx * dy * dz;
+ Nbcore *= dx * dy * dz;
  eps_p = txxyy_num / txxyy_den ;
  output::faniz << setw(12) << tau << setw(14) << vt_num / vt_den << setw(14)
            << vxvy_num / vxvy_den << setw(14) << pi0x_num / pi0x_den << endl;
- cout << setw(10) << tau << setw(13) << E << setw(13) << Efull << setw(13)
-      << nbSurf << setw(13) << S << setw(13) << EtotSurf
-      << setw(10) << nelements << setw(10) << nsusp
-      << setw(13) << (float)(nCoreCutCells) / (float)(nCoreCells) << endl;
+// cout << setw(10) << tau << setw(13) << E << setw(13) << Efull << setw(13)
+//      << nbTotSurf << setw(13) << S << setw(13) << EtotSurf
+//      << setw(10) << nelements << setw(10) << nsusp
+//      << setw(13) << (float)(nCoreCutCells) / (float)(nCoreCells) << endl;
+ // alternative print-out:
+ cout << setw(10) << tau << setw(13) << E << setw(13) << Nb1 << setw(13)
+      << EtotSurf<< setw(13) << EtotSurfPos
+      << setw(13) << EtotSurfNeg << setw(13) << nbTotSurf
+      << setw(13) << nbTotSurfPos << endl; // trim output line << setw(13) << nbTotSurfNeg << endl;
+ cout << setw(10) << "core " << setw(13) << tau << setw(13) << Ecore
+      << setw(13) << Nbcore << setw(13) << Nb2 << endl;
  //-- Cornelius: all done, let's free memory
  for (int i1 = 0; i1 < 2; i1++) {
   for (int i2 = 0; i2 < 2; i2++) {
@@ -1186,6 +1213,9 @@ void Fluid::addParticle(Particle _particle) {
       source[3] = _particle.getPz() * weight * scale / dv;
       source[4] = _particle.getB() * weight * scale / dv;
       source[5] = _particle.getQ() * weight * scale / dv;
+      if(isnan(source[0]) or isinf(source[0])) {
+        cout << "Fluid::addParticle: NaN/inf\n" ;
+      }
       getCell(ix,iy,iz)->addParticleSource(source);
  }
 }
