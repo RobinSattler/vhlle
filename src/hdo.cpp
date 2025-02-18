@@ -1129,11 +1129,11 @@ void Hydro::addParticles(queue<Particle>* particles) {
  while (particle_t < current_t) {
    if (particles->size() > 0) {
     Particle particleToInject = particles->front();
-    cout << "particle at t, e:\n";
-    cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
+    //cout << "particle at t, e:\n";
+    //cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
     f->addParticle(particleToInject);
     particles->pop();
-    cout << "particles in queue: " << particles->size() << endl;
+    //cout << "particles in queue: " << particles->size() << endl;
     if (particles->size() > 0) particle_t = particles->front().getT();
     else particle_t = 1000.;
    } 
