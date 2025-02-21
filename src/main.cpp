@@ -396,7 +396,7 @@ int main(int argc, char **argv) {
  file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
  file_e << "# " << xmin << " " << xmax << " " <<
    ymin << " " << ymax << " " << etamin << " " <<
-   etamax;
+   etamax << "\n";
  file_e << "# Nx, Ny, Nz: \n";
  file_e << "# " << nx << " " << ny << " " << nz << "\n";
 
@@ -408,7 +408,7 @@ int main(int argc, char **argv) {
  file_nb << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
  file_nb << "# " << xmin << " " << xmax << " " <<
    ymin << " " << ymax << " " << etamin << " " <<
-   etamax;
+   etamax << "\n";
  file_nb << "# Nx, Ny, Nz: \n";
  file_nb << "# " << nx << " " << ny << " " << nz << "\n";
 
