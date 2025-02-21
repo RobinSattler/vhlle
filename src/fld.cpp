@@ -768,8 +768,8 @@ int Fluid::outputSurface(double tau) {
                                           2. * sh * ch * piC[index44(0, 3)];
         #else
         for(int ii=0; ii<4; ii++)
-          for(int jj=0; jj<ii; jj++)
-          picart[index44(ii, jj)] = piC[index44(ii, jj)];
+          for(int jj=0; jj<=ii; jj++)
+            picart[index44(ii, jj)] = piC[index44(ii, jj)];
         #endif
       }
       for (int ii = 0; ii < 10; ii++) output::ffreeze << setw(24) << picart[ii];
@@ -1049,7 +1049,7 @@ void Fluid::outputCorona(double tau) {
                                         2. * sh * ch * piC[index44(0, 3)];
        #else
        for(int ii=0; ii<4; ii++)
-        for(int jj=0; jj<ii; jj++)
+        for(int jj=0; jj<=ii; jj++)
          picart[index44(ii, jj)] = piC[index44(ii, jj)];
        #endif
      }
