@@ -403,7 +403,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
 void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* timeInit) {
- double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
+ //double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
  double weight;
 

@@ -243,7 +243,7 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
 }
 
 void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
- double x, y, z;
+ //double x, y, z;
  double e, p, nb, nq, ns, vx, vy, vz;
  Cell *c;
  file_e << t << "\n";
@@ -252,9 +252,9 @@ void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
    for (int iy = 0; iy < f->getNY(); iy++) 
     for (int iz = 0; iz < f->getNZ(); iz++) {
      c = f->getCell(ix, iy, iz);
-     x = f->getX(ix);
-     y = f->getY(iy);
-     z = f->getZ(iz);
+ //    x = f->getX(ix);
+ //    y = f->getY(iy);
+ //    z = f->getZ(iz);
      f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
      file_e << e << " ";
      file_nb << nb << " "; 

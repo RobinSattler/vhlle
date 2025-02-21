@@ -1198,7 +1198,7 @@ void Fluid::InitialAnisotropies(double tau0) {
 }
 
 void Fluid::addParticle(Particle _particle) {
- double source[7];
+ double source[7] = {0.};
  double dv = dx * dy * dz;
  // where to smooth the particle out
  int ixc = _particle.getIxc();
