@@ -243,7 +243,7 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
 }
 
 void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
- double x, y, z;
+ //double x, y, z;
  double e, p, nb, nq, ns, vx, vy, vz;
  Cell *c;
  file_e << t << "\n";
@@ -252,9 +252,9 @@ void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
    for (int iy = 0; iy < f->getNY(); iy++) 
     for (int iz = 0; iz < f->getNZ(); iz++) {
      c = f->getCell(ix, iy, iz);
-     x = f->getX(ix);
-     y = f->getY(iy);
-     z = f->getZ(iz);
+ //    x = f->getX(ix);
+ //    y = f->getY(iy);
+ //    z = f->getZ(iz);
      f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
      file_e << e << " ";
      file_nb << nb << " "; 
@@ -396,7 +396,7 @@ int main(int argc, char **argv) {
  file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
  file_e << "# " << xmin << " " << xmax << " " <<
    ymin << " " << ymax << " " << etamin << " " <<
-   etamax;
+   etamax << "\n";
  file_e << "# Nx, Ny, Nz: \n";
  file_e << "# " << nx << " " << ny << " " << nz << "\n";
 
@@ -408,7 +408,7 @@ int main(int argc, char **argv) {
  file_nb << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
  file_nb << "# " << xmin << " " << xmax << " " <<
    ymin << " " << ymax << " " << etamin << " " <<
-   etamax;
+   etamax << "\n";
  file_nb << "# Nx, Ny, Nz: \n";
  file_nb << "# " << nx << " " << ny << " " << nz << "\n";
 

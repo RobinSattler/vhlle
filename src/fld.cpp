@@ -634,10 +634,12 @@ int Fluid::outputSurface(double tau) {
        cc->getQprev(QCube[0][jx][jy][jz]);
        ccube[0][jx][jy][jz] = e;
        // ---- get viscous tensor
-       for (int ii = 0; ii < 4; ii++)
-        for (int jj = 0; jj <= ii; jj++)
-         piSquare[jx][jy][jz][index44(ii, jj)] = cc->getpi(ii, jj);
-       PiSquare[jx][jy][jz] = cc->getPi();
+       if (trcoeff->isViscous()) {
+         for (int ii = 0; ii < 4; ii++)
+           for (int jj = 0; jj <= ii; jj++) 
+             piSquare[jx][jy][jz][index44(ii, jj)] = cc->getpi(ii, jj);
+         PiSquare[jx][jy][jz] = cc->getPi();
+       }
       }
     cornelius->find_surface_4d(ccube);
     const int Nsegm = cornelius->get_Nelements();
@@ -645,11 +647,11 @@ int Fluid::outputSurface(double tau) {
      nelements++;
      // ---- interpolation procedure
      double vxC = 0., vyC = 0., vzC = 0., TC = 0., mubC = 0., muqC = 0.,
-            musC = 0., piC[10], PiC = 0., nbC = 0.,
+            musC = 0., piC[10] = {0.}, PiC = 0., nbC = 0.,
             nqC = 0.;  // values at the centre, to be interpolated
-     double QC[7] = {0., 0., 0., 0., 0., 0., 0.};
+     double QC[7] = {0.};
      double eC = 0., pC = 0.;
-     for (int ii = 0; ii < 10; ii++) piC[ii] = 0.0;
+    // for (int ii = 0; ii < 10; ii++) piC[ii] = 0.0;
      double wCenT[2] = {1. - cornelius->get_centroid_elem(isegm, 0) / dt,
                         cornelius->get_centroid_elem(isegm, 0) / dt};
      double wCenX[2] = {1. - cornelius->get_centroid_elem(isegm, 1) / dx,
@@ -677,14 +679,16 @@ int Fluid::outputSurface(double tau) {
       cout << "#### Error (surface): high T/mu_b (T=" << TC << "/mu_b=" << mubC << ") #### FREEZEOUT \n";
      }
      if (eC > ecrit * 2.0 || eC < ecrit * 0.5) nsusp++;
-     for (int jx = 0; jx < 2; jx++)
-      for (int jy = 0; jy < 2; jy++)
-       for (int jz = 0; jz < 2; jz++) {
-        for (int ii = 0; ii < 10; ii++)
-         piC[ii] +=
-             piSquare[jx][jy][jz][ii] * wCenX[jx] * wCenY[jy] * wCenZ[jz];
-        PiC += PiSquare[jx][jy][jz] * wCenX[jx] * wCenY[jy] * wCenZ[jz];
-       }
+     if (trcoeff->isViscous()) {
+       for (int jx = 0; jx < 2; jx++)
+         for (int jy = 0; jy < 2; jy++)
+           for (int jz = 0; jz < 2; jz++) {
+             for (int ii = 0; ii < 10; ii++)
+             piC[ii] +=
+                 piSquare[jx][jy][jz][ii] * wCenX[jx] * wCenY[jy] * wCenZ[jz];
+             PiC += PiSquare[jx][jy][jz] * wCenX[jx] * wCenY[jy] * wCenZ[jz];
+           }
+     }
      double v2C = vxC * vxC + vyC * vyC + vzC * vzC;
      if (v2C > 1.) {
       vxC *= sqrt(0.99 / v2C);
@@ -739,33 +743,35 @@ int Fluid::outputSurface(double tau) {
       output::ffreeze << setw(24) << TC << setw(24) << mubC << setw(24) << muqC
               << setw(24) << musC;
       #ifdef OUTPI
-      double picart[10];
-      #ifndef CARTESIAN
-      /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
-                                        2. * ch * sh * piC[index44(0, 3)] +
-                                        sh * sh * piC[index44(3, 3)];
-      /*pi01*/ picart[index44(0, 1)] =
-          ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
-      /*pi02*/ picart[index44(0, 2)] =
-          ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
-      /*pi03*/ picart[index44(0, 3)] =
-          ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
-          (ch * ch + sh * sh) * piC[index44(0, 3)];
-      /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
-      /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
-      /*pi13*/ picart[index44(1, 3)] =
-          sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
-      /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
-      /*pi23*/ picart[index44(2, 3)] =
-          sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
-      /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
-                                        ch * ch * piC[index44(3, 3)] +
-                                        2. * sh * ch * piC[index44(0, 3)];
-      #else
-      for(int ii=0; ii<4; ii++)
-        for(int jj=0; jj<ii; jj++)
-        picart[index44(ii, jj)] = piC[index44(ii, jj)];
-      #endif
+      double picart[10] = {0.};
+      if (trcoeff->isViscous()) {
+        #ifndef CARTESIAN
+        /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
+                                          2. * ch * sh * piC[index44(0, 3)] +
+                                          sh * sh * piC[index44(3, 3)];
+        /*pi01*/ picart[index44(0, 1)] =
+            ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
+        /*pi02*/ picart[index44(0, 2)] =
+            ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
+        /*pi03*/ picart[index44(0, 3)] =
+            ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
+            (ch * ch + sh * sh) * piC[index44(0, 3)];
+        /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
+        /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
+        /*pi13*/ picart[index44(1, 3)] =
+            sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
+        /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
+        /*pi23*/ picart[index44(2, 3)] =
+            sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
+        /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
+                                          ch * ch * piC[index44(3, 3)] +
+                                          2. * sh * ch * piC[index44(0, 3)];
+        #else
+        for(int ii=0; ii<4; ii++)
+          for(int jj=0; jj<=ii; jj++)
+            picart[index44(ii, jj)] = piC[index44(ii, jj)];
+        #endif
+      }
       for (int ii = 0; ii < 10; ii++) output::ffreeze << setw(24) << picart[ii];
       output::ffreeze << setw(24) << PiC << endl;
       #else
@@ -935,19 +941,21 @@ void Fluid::outputCorona(double tau) {
        cc->getQ(QCube[jx][jy][jz]);
        if (e > ecrit) isCorona = false;
        // ---- get viscous tensor
-       for (int ii = 0; ii < 4; ii++)
-        for (int jj = 0; jj <= ii; jj++)
-         piSquare[jx][jy][jz][index44(ii, jj)] = cc->getpi(ii, jj);
-       PiSquare[jx][jy][jz] = cc->getPi();
+       if (trcoeff->isViscous()) {
+         for (int ii = 0; ii < 4; ii++)
+           for (int jj = 0; jj <= ii; jj++)
+             piSquare[jx][jy][jz][index44(ii, jj)] = cc->getpi(ii, jj);
+         PiSquare[jx][jy][jz] = cc->getPi();
+       }
       }
 
     // ---- interpolation procedure
     double vxC = 0., vyC = 0., vzC = 0., TC = 0., mubC = 0., muqC = 0.,
-           musC = 0., piC[10], PiC = 0., nbC = 0.,
+           musC = 0., piC[10]={0.}, PiC = 0., nbC = 0.,
            nqC = 0.;  // values at the centre, to be interpolated
-    double QC[7] = {0., 0., 0., 0., 0., 0., 0.};
+    double QC[7] = {0.};
     double eC = 0., pC = 0.;
-    for (int ii = 0; ii < 10; ii++) piC[ii] = 0.0;
+    //for (int ii = 0; ii < 10; ii++) piC[ii] = 0.0;
     for (int jx = 0; jx < 2; jx++)
      for (int jy = 0; jy < 2; jy++)
       for (int jz = 0; jz < 2; jz++)
@@ -970,13 +978,15 @@ void Fluid::outputCorona(double tau) {
      if (TC > 0.4 || fabs(mubC) > 0.99) {
       cout << "#### Error (surface): high T/mu_b ####\n";
      }
-     for (int jx = 0; jx < 2; jx++)
-      for (int jy = 0; jy < 2; jy++)
-       for (int jz = 0; jz < 2; jz++) {
-        for (int ii = 0; ii < 10; ii++)
-         piC[ii] += piSquare[jx][jy][jz][ii] * 0.125;
-        PiC += PiSquare[jx][jy][jz] * 0.125;
-       }
+     if (trcoeff->isViscous()) {
+      for (int jx = 0; jx < 2; jx++)
+       for (int jy = 0; jy < 2; jy++)
+        for (int jz = 0; jz < 2; jz++) {
+         for (int ii = 0; ii < 10; ii++)
+          piC[ii] += piSquare[jx][jy][jz][ii] * 0.125;
+         PiC += PiSquare[jx][jy][jz] * 0.125;
+        }
+     }
      double v2C = vxC * vxC + vyC * vyC + vzC * vzC;
      if (v2C > 1.) {
       vxC *= sqrt(0.99 / v2C);
@@ -1013,34 +1023,36 @@ void Fluid::outputCorona(double tau) {
      for (int ii = 0; ii < 4; ii++) output::ffreeze << setw(24) << uC[ii];
      output::ffreeze << setw(24) << TC << setw(24) << mubC << setw(24) << muqC
              << setw(24) << musC;
-#ifdef OUTPI
-     double picart[10];
-     #ifndef CARTESIAN
-     /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
-                                      2. * ch * sh * piC[index44(0, 3)] +
-                                      sh * sh * piC[index44(3, 3)];
-     /*pi01*/ picart[index44(0, 1)] =
-         ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
-     /*pi02*/ picart[index44(0, 2)] =
-         ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
-     /*pi03*/ picart[index44(0, 3)] =
-         ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
-         (ch * ch + sh * sh) * piC[index44(0, 3)];
-     /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
-     /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
-     /*pi13*/ picart[index44(1, 3)] =
-         sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
-     /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
-     /*pi23*/ picart[index44(2, 3)] =
-         sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
-     /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
-                                      ch * ch * piC[index44(3, 3)] +
-                                      2. * sh * ch * piC[index44(0, 3)];
-     #else
-     for(int ii=0; ii<4; ii++)
-      for(int jj=0; jj<ii; jj++)
-       picart[index44(ii, jj)] = piC[index44(ii, jj)];
-     #endif
+     #ifdef OUTPI
+     double picart[10] = {0.};
+     if (trcoeff->isViscous()) {
+       #ifndef CARTESIAN
+       /*pi00*/ picart[index44(0, 0)] = ch * ch * piC[index44(0, 0)] +
+                                        2. * ch * sh * piC[index44(0, 3)] +
+                                        sh * sh * piC[index44(3, 3)];
+       /*pi01*/ picart[index44(0, 1)] =
+           ch * piC[index44(0, 1)] + sh * piC[index44(3, 1)];
+       /*pi02*/ picart[index44(0, 2)] =
+           ch * piC[index44(0, 2)] + sh * piC[index44(3, 2)];
+       /*pi03*/ picart[index44(0, 3)] =
+           ch * sh * (piC[index44(0, 0)] + piC[index44(3, 3)]) +
+           (ch * ch + sh * sh) * piC[index44(0, 3)];
+       /*pi11*/ picart[index44(1, 1)] = piC[index44(1, 1)];
+       /*pi12*/ picart[index44(1, 2)] = piC[index44(1, 2)];
+       /*pi13*/ picart[index44(1, 3)] =
+           sh * piC[index44(0, 1)] + ch * piC[index44(3, 1)];
+       /*pi22*/ picart[index44(2, 2)] = piC[index44(2, 2)];
+       /*pi23*/ picart[index44(2, 3)] =
+           sh * piC[index44(0, 2)] + ch * piC[index44(3, 2)];
+       /*pi33*/ picart[index44(3, 3)] = sh * sh * piC[index44(0, 0)] +
+                                        ch * ch * piC[index44(3, 3)] +
+                                        2. * sh * ch * piC[index44(0, 3)];
+       #else
+       for(int ii=0; ii<4; ii++)
+        for(int jj=0; jj<=ii; jj++)
+         picart[index44(ii, jj)] = piC[index44(ii, jj)];
+       #endif
+     }
      for (int ii = 0; ii < 10; ii++) output::ffreeze << setw(24) << picart[ii];
      output::ffreeze << setw(24) << PiC << endl;
 #else
@@ -1186,7 +1198,7 @@ void Fluid::InitialAnisotropies(double tau0) {
 }
 
 void Fluid::addParticle(Particle _particle) {
- double source[7];
+ double source[7] = {0.};
  double dv = dx * dy * dz;
  // where to smooth the particle out
  int ixc = _particle.getIxc();

@@ -44,11 +44,8 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     scale = 1.0;
 
     const double xmin = f->getX(0);
-    const double xmax = f->getX(f->getNX() - 1);
     const double ymin = f->getY(0);
-    const double ymax = f->getY(f->getNY() - 1);
     const double zmin = f->getZ(0);
-    const double zmax = f->getZ(f->getNZ() - 1);
     const double dx = f->getDx();
     const double dy = f->getDy();
     const double dz = f->getDz();
@@ -68,16 +65,12 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
 }
 
 double Particle::calculateNorm(Fluid *f, double R) {
-   int ix, iy, iz;
    const int nx = f->getNX();
    const int ny = f->getNY();
    const int nz = f->getNZ();
    const double xmin = f->getX(0);
-   const double xmax = f->getX(nx - 1);
    const double ymin = f->getY(0);
-   const double ymax = f->getY(ny - 1);
    const double zmin = f->getZ(0);
-   const double zmax = f->getZ(nz - 1);
    const double dx = f->getDx();
    const double dy = f->getDy();
    const double dz = f->getDz();
@@ -88,7 +81,7 @@ double Particle::calculateNorm(Fluid *f, double R) {
    const double uy = py / m;
    const double uz = pz / m;
 
-   double norm;
+   double norm = 0;
    
    for (int ix = ixc - nsmoothx; ix < ixc + nsmoothx + 1; ix++)
     for (int iy = iyc - nsmoothy; iy < iyc + nsmoothy + 1; iy++)
@@ -104,7 +97,7 @@ double Particle::calculateNorm(Fluid *f, double R) {
        norm +=
            exp((-rr - ru * ru) / R / R);  // this term may become big, >800 !
      }
-    return norm;
+   return norm;
 }
 
 double Particle::getWeight(double _xdiff, double _ydiff, double _zdiff) {
@@ -116,23 +109,15 @@ double Particle::getWeight(double _xdiff, double _ydiff, double _zdiff) {
    const double rr = _xdiff * _xdiff + _ydiff * _ydiff + _zdiff * _zdiff;
    const double ru = _xdiff * ux + _ydiff * uy + _zdiff * uz;
       
-   double weight = 1. / gauss_norm * 
+   return 1. / gauss_norm * 
                     exp((-rr - ru * ru) / R / R);
-   return weight;
 }
 
 double Particle::getWeight(int ix, int iy, int iz, Fluid *f, 
         double R) {
-
-   const int nx = f->getNX();
-   const int ny = f->getNY();
-   const int nz = f->getNZ();
    const double xmin = f->getX(0);
-   const double xmax = f->getX(nx - 1);
    const double ymin = f->getY(0);
-   const double ymax = f->getY(ny - 1);
    const double zmin = f->getZ(0);
-   const double zmax = f->getZ(nz - 1);
    const double dx = f->getDx();
    const double dy = f->getDy();
    const double dz = f->getDz();
@@ -141,6 +126,5 @@ double Particle::getWeight(int ix, int iy, int iz, Fluid *f,
    const double ydiff = y - (ymin + iy * dy);
    const double zdiff = z - (zmin + iz * dz);
 
-   double weight = getWeight(xdiff, ydiff, zdiff);
-   return weight;
+   return getWeight(xdiff, ydiff, zdiff);
 }
