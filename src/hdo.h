@@ -59,6 +59,6 @@ public:
  // gets the current proper time
  inline double getTau() const { return tau; }
  #ifdef CARTESIAN
- double time() { return t; }
+ inline double time() const { return t; }
  #endif
 };

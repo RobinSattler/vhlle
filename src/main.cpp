@@ -221,7 +221,9 @@ void printParameters() {
  cout << "smoothingType = " << smoothingType << endl;
  cout << "impactPar = " << impactPar << endl;
  cout << "s0ScaleFactor = " << s0ScaleFactor << endl;
- cout << "VTK_output_values = " << vtk_values << endl;
+ if (!vtk_values.empty()) {
+    cout << "VTK_output_values = " << vtk_values << endl;
+ }
  cout << "======= end parameters =======\n";
 }
 
