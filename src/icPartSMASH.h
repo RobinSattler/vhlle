@@ -17,7 +17,7 @@ private:
  //#else
  double Tau_val, X_val, Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val;
  //#endif
- int Id_val, Charge_val;
+ int Id_val, Baryon_val, Charge_val, Strangeness_val;
   // auxiliary particle arrays
  //#ifdef CARTESIAN
  std::vector<double> T, Z, E, Pz;

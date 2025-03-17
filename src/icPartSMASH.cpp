@@ -156,7 +156,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
  // helper variables for read-out
  double x1, x2, x3, x4, x5, x6, x7;
- double x8, x9, x10;
+ double x8, x9;
  std::vector<Particle> all_particles;
  all_particles.clear();
  all_particles.reserve(10000);
@@ -226,25 +226,17 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   if (!instream.fail()) {
   instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
               Py_val >> Pz_val >> Id_val >> x1 >> Charge_val >> x2 >> x3 >>
-              x4 >> x5 >> x6 >> x7 >> x8 >> x9 >> x10;
-  int Baryon_val = 0;
-  for (auto &code : PDG_Codes_Baryons) {
-        if (Id_val == code) {
-          // PDG code > 0: baryon, else anti baryon
-          (code > 0) ? Baryon_val = 1 : Baryon_val = -1;
-        }
-  }
+              x4 >> x5 >> x6 >> x7 >> x8 >> x9 >> Baryon_val >> Strangeness_val;
+
   if(abs(Id_val)>100) { // exclude photons, W and Z bosons and Higgs
-    Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val,
-        Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
+    Particle particleIn(f, Rgz, Baryon_val, Charge_val, Strangeness_val,
+    T_val, X_val, Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
     all_particles.push_back(particleIn);
     np++;
     //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
   }
   }
   else if (np > 0) {
-   // cout<<"readF14:instream: failure reading data\n" ;
-   // cout<<"stream = "<<instream.str()<<endl ;
    if (nevents % 100 == 0) {
     cout << "event = " << nevents << "  np = " << np << "\r";
     cout << flush;
