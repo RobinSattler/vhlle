@@ -4,7 +4,7 @@ CXXFLAGS      = -Wall -fPIC -O3 -D CARTESIAN
 LD            = g++
 LDFLAGS       = -O3
 
-LIBS          = $(SYSLIBS) -lgsl
+LIBS          = $(SYSLIBS) -lgsl -lgslcblas
 
 vpath %.cpp src
 objdir     = obj
