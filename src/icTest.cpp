@@ -1,9 +1,6 @@
 #include <fstream>
 #include <iomanip>
-#include <iomanip>
-#include <TF1.h>
-#include <TF2.h>
-#include <TGraph.h>
+#include <iostream>
 
 #include "fld.h"
 #include "eos.h"
@@ -35,7 +32,7 @@ void ICTest::setIC(Fluid *f, EoS *eos, int test_option) {
    e_high = 16.0;
    e_low = 1.0;
    double x_half = f->getX(f->getNX()) / 2.; 
-   cout << "x_half = " << x_half << endl;
+   std::cout << "x_half = " << x_half << std::endl;
 
    for (int ix = 0; ix < f->getNX(); ix++)
     for (int iy = 0; iy < f->getNY(); iy++)
