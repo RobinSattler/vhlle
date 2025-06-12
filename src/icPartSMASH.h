@@ -87,7 +87,7 @@ public:
  IcPartSMASH(Fluid *f, const char *filename, double gaussian_sigma, std::deque<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
- void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double* ctime);
+ void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double &ctime, int min_particles_FO, double &ftime);
 };
 
 void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);

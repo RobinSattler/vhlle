@@ -394,63 +394,68 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
 
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
-void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double* timeInit) {
- //double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
- double Q[7], e, p, nb, nq, ns, vx, vy, vz;
- double weight;
+void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &timeInit, int min_particles_FO, double &timeInitFO) {
+  //double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
+  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
+  double weight;
 
- double t0 = particles->front().getT();
- double t = t0;
- *timeInit = t0;
- 
- // pick particles that left SMASH the earliest
- while (t <= t0) {
-  Particle particleToSmooth = particles->front();
-  int ixc = particleToSmooth.getIxc();
-  int smoothx = particleToSmooth.getNsmoothX();
-  int iyc = particleToSmooth.getIyc();
-  int smoothy = particleToSmooth.getNsmoothY();
-  int izc = particleToSmooth.getIzc();
-  int smoothz = particleToSmooth.getNsmoothZ();
-  const double scale = particleToSmooth.getScale();
-    
-  for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
-   for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
-    for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
-     if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+  double t0 = particles->front().getT();
+  double t = t0;
+  timeInit = t0;
+  timeInitFO = particles->at(min_particles_FO*nevents).getT();
+  
+  cout << "Hydro starting at " << timeInit << endl;
+  cout << "Freezeout starting at " << timeInitFO << endl;
+
+  // pick particles that left SMASH the earliest
+  while (t <= t0 && particles->size()>0) {
+    Particle particleToSmooth = particles->front();
+    int ixc = particleToSmooth.getIxc();
+    int smoothx = particleToSmooth.getNsmoothX();
+    int iyc = particleToSmooth.getIyc();
+    int smoothy = particleToSmooth.getNsmoothY();
+    int izc = particleToSmooth.getIzc();
+    int smoothz = particleToSmooth.getNsmoothZ();
+    const double scale = particleToSmooth.getScale();
       
-      weight = particleToSmooth.getWeight(ix, iy, iz, f, Rgz);
-      
-      T00[ix][iy][iz] += particleToSmooth.getE() * weight * scale;
-      T0x[ix][iy][iz] += particleToSmooth.getPx() * weight * scale;
-      T0y[ix][iy][iz] += particleToSmooth.getPy() * weight * scale;
-      T0z[ix][iy][iz] += particleToSmooth.getPz() * weight * scale;
-      QB[ix][iy][iz] += particleToSmooth.getB() * weight * scale;
-      QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
- }
- 
- particles->pop_front();
- t = particles->front().getT(); 
-} // all particles for IC should be in now
+    for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
+    for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
+      for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+      if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+        
+        weight = particleToSmooth.getWeight(ix, iy, iz, f, Rgz);
+        
+        T00[ix][iy][iz] += particleToSmooth.getE() * weight * scale;
+        T0x[ix][iy][iz] += particleToSmooth.getPx() * weight * scale;
+        T0y[ix][iy][iz] += particleToSmooth.getPy() * weight * scale;
+        T0z[ix][iy][iz] += particleToSmooth.getPz() * weight * scale;
+        QB[ix][iy][iz] += particleToSmooth.getB() * weight * scale;
+        QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
+  }
+  
+  particles->pop_front();
+  t = particles->front().getT(); 
+  } // all particles for IC should be in now
 
-// initialize cell values
- for (int ix = 0; ix < nx; ix++)
-  for (int iy = 0; iy < ny; iy++)
-   for (int iz = 0; iz < nz; iz++) {
-    Q[T_] = T00[ix][iy][iz] / dx / dy / dz;
-    Q[X_] = T0x[ix][iy][iz] / dx / dy / dz;
-    Q[Y_] = T0y[ix][iy][iz] / dx / dy / dz;
-    Q[Z_] = T0z[ix][iy][iz] / dx / dy / dz;
-    Q[NB_] = QB[ix][iy][iz] / dx / dy / dz;
-    Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
-    Q[NS_] = 0.0;
-    transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
+  // initialize cell values
+  for (int ix = 0; ix < nx; ix++)
+    for (int iy = 0; iy < ny; iy++)
+      for (int iz = 0; iz < nz; iz++) {
+        Q[T_] = T00[ix][iy][iz] / dx / dy / dz;
+        Q[X_] = T0x[ix][iy][iz] / dx / dy / dz;
+        Q[Y_] = T0y[ix][iy][iz] / dx / dy / dz;
+        Q[Z_] = T0z[ix][iy][iz] / dx / dy / dz;
+        Q[NB_] = QB[ix][iy][iz] / dx / dy / dz;
+        Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
+        Q[NS_] = 0.0;
+        transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
 
-    Cell* c = f->getCell(ix, iy, iz);
-    c->setPrimVar(eos, 1.0, e, nb, nq, ns, vx, vy, vz);
-    c->getQ(Q);
-    if (e > 0.) c->setAllM(1.);
- }
+        Cell* c = f->getCell(ix, iy, iz);
+        c->setPrimVar(eos, 1.0, e, nb, nq, ns, vx, vy, vz);
+        c->getQ(Q);
+        if (e > 0.) 
+          c->setAllM(1.);
+      }
  // fluid initialized + particles queue awaits
 }
 
