@@ -273,27 +273,6 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
  return fnew;
 }
 
-void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
- //double x, y, z;
- double e, p, nb, nq, ns, vx, vy, vz;
- Cell *c;
- file_e << t << "\n";
- file_nb << t << "\n";
- for (int ix = 0; ix < f->getNX(); ix++) 
-   for (int iy = 0; iy < f->getNY(); iy++) 
-    for (int iz = 0; iz < f->getNZ(); iz++) {
-     c = f->getCell(ix, iy, iz);
- //    x = f->getX(ix);
- //    y = f->getY(iy);
- //    z = f->getZ(iz);
-     f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
-     file_e << e << " ";
-     file_nb << nb << " "; 
-  }
-  file_e << "\n";
-  file_nb << "\n";
-}
-
 // program parameters, to be read from file
 // int nx, ny, nz, eosType ;
 // double xmin, xmax, ymin, ymax, zmin, zmax, tau0, tauMax, dtau ;
@@ -313,7 +292,6 @@ int main(int argc, char **argv) {
  queue<Particle>* particles = new queue<Particle>();
  time_t start = 0, end;
  time(&start);
- Particle one_particle;
 
  // read parameters from file
  setDefaultParameters();
@@ -410,46 +388,22 @@ int main(int argc, char **argv) {
 
  // hydro init
  double ctime;
+ double ftime = 0.;  // time to start freezeout
  #ifdef CARTESIAN
  h = new Hydro(f, eos, trcoeff, *timeInit, dtau);
  ctime = h->time();
- cout << "Hydro starting at " << ctime << endl;
- // TODO: specific for DI, not all cartesian
- double ftime = ctime + 1.0;  // start hypersurface calculation 1 fm/c after the start
+ // start hypersurface calculation 1 fm/c after the start
+ if (icModel == 9)
+ {
+    ftime = ctime + 1.0;
+ }  
  #else
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
- double ftime = 0.;
  #endif
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
  //f->outputCorona(tau0);
-
- // TODO: remove, only for DI
- // initialize energy density output
- string outfile_e = outputDir.c_str();
- outfile_e.append("/energy_density.dat");
- ofstream file_e(outfile_e.c_str());
- file_e << "# block at t, energy_density: iterating over z, y, x \n";
- file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
- file_e << "# " << xmin << " " << xmax << " " <<
-   ymin << " " << ymax << " " << etamin << " " <<
-   etamax << "\n";
- file_e << "# Nx, Ny, Nz: \n";
- file_e << "# " << nx << " " << ny << " " << nz << "\n";
-
- // initialize baryon number density output
- string outfile_nb = outputDir.c_str();
- outfile_nb.append("/baryon_number.dat");
- ofstream file_nb(outfile_nb.c_str());
- file_nb << "# block at t, energy_density: iterating over z, y, x \n";
- file_nb << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
- file_nb << "# " << xmin << " " << xmax << " " <<
-   ymin << " " << ymax << " " << etamin << " " <<
-   etamax << "\n";
- file_nb << "# Nx, Ny, Nz: \n";
- file_nb << "# " << nx << " " << ny << " " << nz << "\n";
-
 
  bool resized = false; // flag if the grid has been resized
  
@@ -477,24 +431,24 @@ int main(int argc, char **argv) {
    cout << "timestep reduced by " << nSubSteps << endl;
   } else 
    h->performStep();
-   
-  if (particles->size() > 0) h->addParticles(particles);
   
-  // freeze-out only after ftime and up until nelements is 0
-  // TODO ftime is only for DI
+  if (icModel == 9)
+  {
+    if (particles->size() > 0) h->addParticles(particles);
+  }
+  
   if ((ctime > ftime) && (nelements>0))
    nelements = f->outputSurface(ctime);
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
   if (nelements == 0)
   {
-    outputCoronaParticles(particles, outputDir);
+    if (icModel == 9)
+    {
+      outputCoronaParticles(particles, outputDir);
+    }
     break;
   }
-
-  // TODO: only for DIvoid outputCoronaParticles(queue<Particle>* particles, bool* exit_ready)
-  // output energy density at every 10th timestep
-  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb); 
     
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
@@ -509,13 +463,9 @@ int main(int argc, char **argv) {
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
  
- cout << "Is particle queue empty: " << particles->empty() << endl;
-
  delete f;
  delete h;
  delete eos;
  delete eosH;
  delete particles;
- file_e.close();
- file_nb.close();
 }
