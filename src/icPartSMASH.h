@@ -1,5 +1,5 @@
 #include <vector>
-#include <queue>
+#include <deque>
 
 class Fluid;
 class EoS;
@@ -84,10 +84,10 @@ private:
 
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0);
- IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, std::queue<Particle>* particles);
+ IcPartSMASH(Fluid *f, const char *filename, double gaussian_sigma, std::deque<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
- void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double* ctime);
+ void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double* ctime);
 };
 
-void outputCoronaParticles(std::queue<Particle>* particles, std::string outputDir);
+void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);

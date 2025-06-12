@@ -1122,7 +1122,7 @@ void Hydro::performStep(void) {
  f->correctImagCellsFull();
 }
 
-void Hydro::addParticles(queue<Particle>* particles) {
+void Hydro::addParticles(deque<Particle>* particles) {
  //==== particles coming in ====
  double particle_t = particles->front().getT();
  double current_t = t;
@@ -1132,7 +1132,7 @@ void Hydro::addParticles(queue<Particle>* particles) {
     //cout << "particle at t, e:\n";
     //cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
     f->addParticle(particleToInject);
-    particles->pop();
+    particles->pop_front();
     //cout << "particles in queue: " << particles->size() << endl;
     if (particles->size() > 0) particle_t = particles->front().getT();
     else particle_t = 1000.;

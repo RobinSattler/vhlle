@@ -142,8 +142,8 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
 // dynamical IC: set up queue of particles
 // works only #ifdef CARTESIAN
-IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
-                         queue<Particle>* particles) {
+IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
+                         deque<Particle>* particles) {
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -152,7 +152,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  dy = f->getDy();
  dz = f->getDz();
 
- Rgz = _Rgz;
+ Rgz = sqrt(2)*gaussian_sigma;
 
  // helper variables for read-out
  double x1, x2, x3, x4, x5, x6, x7;
@@ -252,7 +252,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  // copy the contents of the vector to the queue
  for (auto &particle : all_particles) {
    particle.setScale(1./nevents);
-   particles->push(particle);
+   particles->push_back(particle);
  }
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
@@ -394,7 +394,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
 
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
-void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* timeInit) {
+void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double* timeInit) {
  //double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
  double weight;
@@ -429,7 +429,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
       QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
  }
  
- particles->pop();
+ particles->pop_front();
  t = particles->front().getT(); 
 } // all particles for IC should be in now
 
@@ -456,18 +456,18 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
 
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
-void outputCoronaParticles(std::queue<Particle>* particles, std::string outputDir) 
+void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir) 
 {
  // sort particles by event number
   std::vector<Particle> tempVec;
     while (!particles->empty()) {
         tempVec.push_back(particles->front());
-        particles->pop();
+        particles->pop_front();
     }
   std::sort(tempVec.begin(), tempVec.end(),
    [](const Particle &a, const Particle &b) -> bool { return a.getEventNo() < b.getEventNo(); }); 
   for (const auto& item : tempVec) {
-        particles->push(item);
+        particles->push_back(item);
     }
 
  
@@ -507,7 +507,7 @@ void outputCoronaParticles(std::queue<Particle>* particles, std::string outputDi
                     p0 << " " << px << " " << py << " " << pz << " " << pdg << 
                     " " << id << " " << charge << "\n";
         n_part += 1;
-        particles->pop();
+        particles->pop_front();
         particle_number = particles->size();
       }
       outfile << "# event " <<  n_event << " end\n";

@@ -1,4 +1,4 @@
-#include <queue>
+#include <deque>
 
 class Cell;
 class Fluid;
@@ -60,5 +60,5 @@ public:
  double time() { return t; }
  #endif
  // adds sources from incoming particles into the hydro
- void addParticles(std::queue<Particle>* particles);
+ void addParticles(std::deque<Particle>* particles);
 };

@@ -76,10 +76,12 @@ double xmin {-5.0}, xmax {5.0}, ymin {-5.0}, ymax {5.0}, etamin {-5.0},
   etaS {0.08}, zetaS {0.0}, eCrit {0.5}, etaSEpsilonMin {5.}, al {0.}, ah {0.}, aRho {0.}, T0 {0.15},
   etaSMin {0.08}, etaSShiftMuB {0.}, etaSScaleMuB {0.}, zetaSPeakEpsilon {5.},
   zetaSScaleBeta {0.103}, zetaSSigmaMinus {0.1}, zetaSSigmaPlus {0.1}, epsilon0, Rgt {1.0},
-  Rgz {1.0}, impactPar, s0ScaleFactor;
+  Rgz {1.0}, impactPar, s0ScaleFactor, gaussian_sigma {0.0};
 string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
+bool corona_was_output {false};
+
 
 void setDefaultParameters() {
   // specifically for dynamical initialization, do not resize
@@ -140,6 +142,7 @@ void readParameters(char *parFile) {
         {"freezeoutExtend", [](const string& value) { freezeoutExtend = atoi(value.c_str()); }},
         {"vorticity", [](const string& value) { vorticityOn = atoi(value.c_str()); }},
         {"smoothingType", [](const string& value) { smoothingType = atoi(value.c_str()); }},
+        {"Gaussian_Sigma", [](const string& value) { gaussian_sigma = atof(value.c_str()); }},
     };
 
     while (fin.good()) {
@@ -289,7 +292,7 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
- queue<Particle>* particles = new queue<Particle>();
+ deque<Particle>* particles = new deque<Particle>();
  time_t start = 0, end;
  time(&start);
 
@@ -370,7 +373,7 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos, 1);
    delete ic;
  } else if(icModel==9) { // SMASH dynamical IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, particles);
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), gaussian_sigma, particles);
    ic->setIC(f,eos,particles,timeInit);
    delete ic;
  } else {
