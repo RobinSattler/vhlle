@@ -399,16 +399,15 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
   double Q[7], e, p, nb, nq, ns, vx, vy, vz;
   double weight;
 
-  double t0 = particles->front().getT();
-  double t = t0;
-  timeInit = t0;
+  timeInit = particles->front().getT();
   timeInitFO = particles->at(min_particles_FO*nevents).getT();
   
   cout << "Hydro starting at " << timeInit << endl;
   cout << "Freezeout starting at " << timeInitFO << endl;
 
+  double t = timeInit;
   // pick particles that left SMASH the earliest
-  while (t <= t0 && particles->size()>0) {
+  while (t <= timeInit && particles->size()>0) {
     Particle particleToSmooth = particles->front();
     int ixc = particleToSmooth.getIxc();
     int smoothx = particleToSmooth.getNsmoothX();

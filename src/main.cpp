@@ -83,7 +83,6 @@ int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
 bool corona_was_output {false};
 int minParticlesFO {15};
 
-
 void setDefaultParameters() {
   // specifically for dynamical initialization, do not resize
   tauResize = 100.0;
@@ -433,8 +432,13 @@ int main(int argc, char **argv) {
     if (particles->size() > 0) h->addParticles(particles);
   }
   
-  if ((ctime > timeInitFO) && (nelements>0))
-   nelements = f->outputSurface(ctime);
+  if ((ctime > timeInitFO) && (nelements>0)) {
+    nelements = f->outputSurface(ctime);
+    if (!corona_was_output) {
+      f->outputCorona(1);
+      corona_was_output = true;
+    }
+  }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
   if (nelements == 0)
