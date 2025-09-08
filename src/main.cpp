@@ -234,7 +234,9 @@ void printParameters() {
   cout << "smoothingType = " << smoothingType << endl;
   cout << "impactPar = " << impactPar << endl;
   cout << "s0ScaleFactor = " << s0ScaleFactor << endl;
-  cout << "VTK_output_values = " << vtk_values << endl;
+  if (!vtk_values.empty()) {
+    cout << "VTK_output_values = " << vtk_values << endl;
+  }
   cout << "======= end parameters =======\n";
 }
 
@@ -401,12 +403,17 @@ int main(int argc, char **argv) {
  //f->outputCorona(tau0);
 
  bool resized = false; // flag if the grid has been resized
- 
+
  int timestep = 0;
- int nelements = 1;  
+ int nelements = 1;
+ std::string dir=outputDir.c_str();
+ VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin);
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
+  if (!vtk_values.empty()) {
+    vtk_out.write(*h,vtk_values);
+  }
   int nSubSteps = 1;
   #ifdef CARTESIAN
   ctime = h->time();
@@ -424,14 +431,14 @@ int main(int argc, char **argv) {
    }
    h->setDtau(h->getDtau() * nSubSteps);
    cout << "timestep reduced by " << nSubSteps << endl;
-  } else 
+  } else
    h->performStep();
-  
+
   if (icModel == 9)
   {
     if (particles->size() > 0) h->addParticles(particles);
   }
-  
+
   if ((ctime > timeInitFO) && (nelements>0)) {
     nelements = f->outputSurface(ctime);
     if (!corona_was_output) {
@@ -449,7 +456,7 @@ int main(int argc, char **argv) {
     }
     break;
   }
-    
+
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
    f = expandGrid2x(h, eos, eosH, trcoeff);
@@ -462,7 +469,7 @@ int main(int argc, char **argv) {
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
- 
+
  delete f;
  delete h;
  delete eos;
