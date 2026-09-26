@@ -46,7 +46,6 @@ class VtkOutput {
                         const std::string &quantity);
   void write_vtk_tensor(std::ofstream &file, const Hydro &h,
                         const std::string &quantity);
-  bool is_quantity_implemented(const std::string &quantity) const;
   std::string make_filename(const std::string &descr, int counter) const;
 
  public:

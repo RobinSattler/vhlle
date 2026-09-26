@@ -157,14 +157,16 @@ std::vector<std::string> split(const std::string &s, const char delim) {
   return result;
 }
 
-bool VtkOutput::is_quantity_implemented(const std::string &quantity) const {
-  return valid_quantities_.find(quantity) != valid_quantities_.end();
-}
-
 void VtkOutput::write(const Hydro &h, const std::string &quantities) {
+  if (quantities.empty()) {
+    std::cerr << "VTK quantities in configuration file are empty. "
+      "No VTK output will be created.\n";
+    return;
+  }
   std::vector<std::string> quantities_list = split(quantities, ',');
   for (const auto &q : quantities_list) {
-    if (!is_quantity_implemented(q)) {
+    const auto quantity_it = valid_quantities_.find(q);
+    if (quantity_it == valid_quantities_.end()) {
       std::cerr << "Given quantity '" << q << "' is not an "
         "implemented VTK quantity. This entry will be skipped.\n";
       continue;
@@ -177,11 +179,12 @@ void VtkOutput::write(const Hydro &h, const std::string &quantities) {
     }
 
     write_header(file, h, q);
-    if (valid_quantities_.at(q) == "scalar") {
+    const std::string &quantity_type = quantity_it->second;
+    if (quantity_type == "scalar") {
       write_vtk_scalar(file, h, q);
-    } else if (valid_quantities_.at(q) == "vector") {
+    } else if (quantity_type == "vector") {
       write_vtk_vector(file, h, q);
-    } else if (valid_quantities_.at(q) == "tensor") {
+    } else if (quantity_type == "tensor") {
       write_vtk_tensor(file, h, q);
     } else {
       std::cerr << "Quantity '" << q << "' is neither stated to be a scalar, "
