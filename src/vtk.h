@@ -4,9 +4,7 @@
 #include <map>
 #include <string>
 
-class Cell;
 class EoS;
-class Fluid;
 class Hydro;
 
 class VtkOutput {
