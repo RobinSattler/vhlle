@@ -168,9 +168,13 @@ void VtkOutput::write(const Hydro &h, const std::string &quantities) {
         "implemented VTK quantity. This entry will be skipped.\n";
       continue;
     }
-    std::ofstream file{};
 
-    file.open(make_filename(q, vtk_output_counter_), std::ios::out);
+    const auto filename = make_filename(q, vtk_output_counter_);
+    std::ofstream file{filename};
+    if (!file) {
+      throw std::runtime_error("Unable to open VTK output file: " + filename);
+    }
+
     write_header(file, h, q);
     if (valid_quantities_.at(q) == "scalar") {
       write_vtk_scalar(file, h, q);
@@ -183,7 +187,6 @@ void VtkOutput::write(const Hydro &h, const std::string &quantities) {
         "nor a vector, nor a tensor. Skipping this quantity. Please check the "
         "map in file src/vtk.h.\n";
     }
-    file.close();
   }
 
   vtk_output_counter_++;
