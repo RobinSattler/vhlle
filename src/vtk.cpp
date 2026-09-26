@@ -81,6 +81,9 @@ void VtkOutput::write_vtk_scalar(std::ofstream &file, const Hydro &h,
           } else if (quantity == "T") {
             q = T;
           }
+        } else {
+          throw std::logic_error(
+              "Unhandled scalar VTK quantity: '" + quantity + "'");
         }
         file << q << " ";
       }
@@ -91,6 +94,10 @@ void VtkOutput::write_vtk_scalar(std::ofstream &file, const Hydro &h,
 
 void VtkOutput::write_vtk_vector(std::ofstream &file, const Hydro &h,
                                  const std::string &quantity) {
+  // The only implemented vector quantity is velocity.
+  if (quantity != "v") {
+    throw std::logic_error("Unhandled vector VTK quantity: '" + quantity + "'");
+  }
   file << "VECTORS " << quantity << " double\n";
   file << std::setprecision(3);
   file << std::fixed;
@@ -105,11 +112,7 @@ void VtkOutput::write_vtk_vector(std::ofstream &file, const Hydro &h,
         } else {
          cell->getPrimVar(eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
         }
-        std::vector<double> q = {0., 0., 0.};
-        if (quantity == "v") {
-          q = {vx, vy, vz};
-        }
-        file << q.at(0) << " " << q.at(1) << " " << q.at(2) << "\n";
+        file << vx << " " << vy << " " << vz << "\n";
       }
     }
   }
@@ -117,6 +120,10 @@ void VtkOutput::write_vtk_vector(std::ofstream &file, const Hydro &h,
 
 void VtkOutput::write_vtk_tensor(std::ofstream &file, const Hydro &h,
                                  const std::string &quantity) {
+  // The only implemented tensor quantity is the shear stress tensor.
+  if (quantity != "pi") {
+    throw std::logic_error("Unhandled tensor VTK quantity: '" + quantity + "'");
+  }
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       file << "SCALARS " << quantity << std::to_string(i) << std::to_string(j)
@@ -129,11 +136,7 @@ void VtkOutput::write_vtk_tensor(std::ofstream &file, const Hydro &h,
         for (int iy = 0; iy < num_of_cells_y_direction_; iy++) {
           for (int ix = 0; ix < num_of_cells_x_direction_; ix++) {
             Cell* cell = h.getFluid()->getCell(ix, iy, ieta);
-            double q = 0;
-            if (quantity == "pi") {
-              q = cell->getpi(i, j);
-            }
-            file << q << " ";
+            file << cell->getpi(i, j) << " ";
           }
           file << "\n";
         }
