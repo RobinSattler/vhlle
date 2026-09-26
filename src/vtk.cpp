@@ -29,7 +29,8 @@ void VtkOutput::write_header(std::ofstream &file, const Hydro &h,
                         * num_of_cells_eta_direction_ << "\n";
 }
 
-std::string VtkOutput::make_filename(const std::string &quantity, int counter) {
+std::string VtkOutput::make_filename(const std::string &quantity,
+                                     const int counter) {
   char suffix[24];
   std::snprintf(suffix, sizeof(suffix), "_taustep%05d.vtk", counter);
   return path_ + "/" + quantity + suffix;
@@ -143,10 +144,10 @@ void VtkOutput::write_vtk_tensor(std::ofstream &file, const Hydro &h,
 
 std::vector<std::string> split(const std::string &s, const char delim) {
   std::vector<std::string> result;
-  std::stringstream ss(s);
+  std::stringstream ss{s};
   std::string item;
 
-  while (getline(ss, item, delim)) {
+  while (std::getline(ss, item, delim)) {
     result.push_back(item);
   }
 
@@ -161,13 +162,13 @@ bool VtkOutput::is_quantity_implemented(const std::string &quantity) {
 
 void VtkOutput::write(const Hydro &h, const std::string &quantities) {
   std::vector<std::string> quantities_list = split(quantities, ',');
-  for (std::string q : quantities_list) {
+  for (const auto &q : quantities_list) {
     if (!is_quantity_implemented(q)) {
       std::cerr << "Given quantity '" << q << "' is not an "
         "implemented VTK quantity. This entry will be skipped.\n";
       continue;
     }
-    std::ofstream file;
+    std::ofstream file{};
 
     file.open(make_filename(q, vtk_output_counter_), std::ios::out);
     write_header(file, h, q);
