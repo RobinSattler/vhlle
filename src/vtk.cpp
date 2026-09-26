@@ -30,7 +30,7 @@ void VtkOutput::write_header(std::ofstream &file, const Hydro &h,
 }
 
 std::string VtkOutput::make_filename(const std::string &quantity,
-                                     const int counter) {
+                                     const int counter) const {
   char suffix[24];
   std::snprintf(suffix, sizeof(suffix), "_taustep%05d.vtk", counter);
   return path_ + "/" + quantity + suffix;
@@ -154,10 +154,8 @@ std::vector<std::string> split(const std::string &s, const char delim) {
   return result;
 }
 
-bool VtkOutput::is_quantity_implemented(const std::string &quantity) {
-  bool quantity_is_valid = (valid_quantities_.find(quantity)
-                            != valid_quantities_.end());
-  return quantity_is_valid;
+bool VtkOutput::is_quantity_implemented(const std::string &quantity) const {
+  return valid_quantities_.find(quantity) != valid_quantities_.end();
 }
 
 void VtkOutput::write(const Hydro &h, const std::string &quantities) {
