@@ -1,12 +1,8 @@
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
+#pragma once
+
+#include <iosfwd>
 #include <map>
-#include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 class Cell;
 class EoS;
