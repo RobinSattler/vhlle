@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
 
  // hydro init
  double ctime;
- 
+
  if(cartesian) {
   h = new Hydro(f, eos, trcoeff, timeInit, dtau, cartesian);
   ctime = h->getTime();
@@ -441,7 +441,7 @@ int main(int argc, char **argv) {
  bool resized = false; // flag if the grid has been resized
 
  std::string dir=outputDir.c_str();
- VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin,cartesian);
+ VtkOutput vtk_out = VtkOutput(dir, *eos, xmin, ymin, etamin, cartesian);
  int nelements = 1;
 
  // ############### THE TIMESTEP LOOP ##############
@@ -449,10 +449,10 @@ int main(int argc, char **argv) {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
   if (!vtk_values.empty()) {
-    vtk_out.write(*h,vtk_values);
+    vtk_out.write(*h, vtk_values);
   }
   int nSubSteps = 1;
-    
+
   while (dtau / nSubSteps >
          1.0 * ctime * (etamax - etamin) / (nz - 1)) {
    nSubSteps *= 2;  // 0.02 in "old" coordinates
@@ -467,7 +467,7 @@ int main(int argc, char **argv) {
   } else {
    h->performStep();
   }
-  
+
   if (cartesian) {
    ctime = h->getTime();
   }
@@ -477,16 +477,16 @@ int main(int argc, char **argv) {
 
   if (icModel == 10) {
     if (particles->size() > 0) h->addParticles(particles);
-    
+
     if ((ctime > timeInitFO) && (nelements>0)) {
       nelements = f->outputSurface(ctime, freezeoutExtend);
-    } 
+    }
   } else {
     nelements = f->outputSurface(h->getTau(), freezeoutExtend);
   }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
-  
+
   if (nelements == 0)
   {
     if (icModel == 10)
