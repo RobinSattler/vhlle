@@ -146,14 +146,19 @@ void VtkOutput::write_vtk_tensor(std::ofstream &file, const Hydro &h,
 }
 
 std::vector<std::string> split(const std::string &s, const char delim) {
-  std::vector<std::string> result;
+  std::vector<std::string> result{};
   std::stringstream ss{s};
-  std::string item;
+  std::string item{};
 
   while (std::getline(ss, item, delim)) {
-    result.push_back(item);
+   const auto first = item.find_first_not_of(" \t\n\r\f\v");
+   const auto last = item.find_last_not_of(" \t\n\r\f\v");
+   if (first == std::string::npos) {
+     result.emplace_back();
+   } else {
+     result.emplace_back(item.substr(first, last - first + 1));
+   }
   }
-
   return result;
 }
 

@@ -25,8 +25,8 @@ class VtkOutput {
 
   /* The following map contains all currently supported VTK quantities.
    * If multiple quantities are desired, the delimiter in the config file has
-   * to be a comma without any whitespaces in between, for example:
-   * `VTK_output_valus eps,mub,nq,T,v,pi`
+   * to be a comma. For example: `VTK_output_valus eps,mub,nq,T,v,pi`
+   * Any whitespace will be stripped.
    * For vector quantities only the corresponding three vector will be written
    * to the output file. */
   const std::map<std::string, QuantityType> valid_quantities_ = {
