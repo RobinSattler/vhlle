@@ -80,11 +80,7 @@ void VtkOutput::write_vtk_scalar(std::ofstream &file, const Hydro &h,
       for (std::size_t ix = 0; ix < num_of_cells_x_direction_; ix++) {
         double e, nb, nq, ns, p, vx, vy, vz;
         Cell* cell = h.getFluid()->getCell(ix, iy, ieta);
-        if (cartesian_) {
-         cell->getPrimVar(&eos_, 1.0, e, p, nb, nq, ns, vx, vy, vz);
-        } else {
-         cell->getPrimVar(&eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
-        }
+        cell->getPrimVar(&eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
         double q = 0;
         // scalar quantities
         if (quantity == "eps") {
@@ -140,11 +136,7 @@ void VtkOutput::write_vtk_vector(std::ofstream &file, const Hydro &h,
       for (std::size_t ix = 0; ix < num_of_cells_x_direction_; ix++) {
         double e, p, nb, nq, ns, vx, vy, vz;
         Cell* cell = h.getFluid()->getCell(ix, iy, ieta);
-        if (cartesian_) {
-         cell->getPrimVar(&eos_, 1.0, e, p, nb, nq, ns, vx, vy, vz);
-        } else {
-         cell->getPrimVar(&eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
-        }
+        cell->getPrimVar(&eos_, h.getTau(), e, p, nb, nq, ns, vx, vy, vz);
         file << vx << ' ' << vy << ' ' << vz << '\n';
       }
     }
